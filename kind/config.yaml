@@ -1,0 +1,48 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+# im documenting configurations in here so I dont have to keep reading this https://kind.sigs.k8s.io/docs/user/configuration/
+# note: there are section that I find irrelevant to document, so I didnt (e.g. kubeadm configs)
+# Ingress/LB configs arent docuemented here. See here https://kind.sigs.k8s.io/docs/user/ingress/ https://kind.sigs.k8s.io/docs/user/loadbalancer/
+# multi worker nodes to test rolling updates. doesnt add any real compute capacity
+- role: control-plane
+  # kubernetes v1.29.2, find versions here https://github.com/kubernetes-sigs/kind/releases
+  image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
+  # if you want extra mounts, can be done to every node
+  # extraMounts:
+  # - hostPath: /path/to/my/files
+  #   containerPath: /files
+  #   readOnly: false
+  # port forward 80 on the host to 80 on this node, can be done to every node
+  # control plane node port is already set in the "networking" section below
+  # nodePort services port mappings can be configured here, same for every node
+  # extraPortMappings:
+  # - containerPort: 80
+  #   hostPort: 80
+  #   # optional: set the bind address on the host
+  #   # 0.0.0.0 is the current default
+  #   listenAddress: "127.0.0.1"
+  #   # optional: set the protocol to one of TCP, UDP, SCTP.
+  #   # TCP is the default
+  #   protocol: TCP
+- role: worker
+  image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
+  # labels for nodeSelectors
+  labels:
+    tier: frontend
+- role: worker
+  image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
+  labels:
+    tier: backend
+networking:
+  # control plane on https://127.0.0.1:6445. port is mapped 6445:6443
+  apiServerAddress: "127.0.0.1"
+  apiServerPort: 6445
+  # customize pods subnet, below is default
+  podSubnet: "10.244.0.0/16"
+  # customize service subnet, below is default
+  serviceSubnet: "10.96.0.0/12"
+  # if you want to use a different CNI like Calico, set the following to true
+  disableDefaultCNI: false
+  # kube-proxy mode. options: iptables, ipvs, none (disabled). default: iptables
+  kubeProxyMode: "iptables"
